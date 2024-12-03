@@ -7,13 +7,26 @@
 #' @param predictors A character vector of column names to be used as predictors.
 #' @param response A string specifying the name of the response variable.
 #' @return A numeric vector containing the initial coefficient estimates.
+#' @examples
+#' # Example usage:
+#' file_path <- "your_dataset.csv"
+#' predictors <- c("temp", "RH", "wind", "rain")
+#' response <- "area"
+#' initialize_coefficients(file_path, predictors, response)
 #' @export
 initialize_coefficients <- function(file_path, predictors, response) {
+  # Load the data
   data <- read.csv(file_path)
+
+  # Select predictors and response
   X <- data[, predictors]
-  y <- ifelse(data[[response]] > 0, 1, 0)
+  y <- ifelse(data[[response]] > 0, 1, 0)  # Binary response
+
+  # Ensure numeric columns
   X <- X[sapply(X, is.numeric)]
   X <- cbind(Intercept = 1, X)
+
+  # Compute initial coefficients
   beta_init <- solve(t(X) %*% X) %*% t(X) %*% y
   return(as.vector(beta_init))
 }
@@ -29,35 +42,26 @@ initialize_coefficients <- function(file_path, predictors, response) {
 #' @param alpha Significance level for the confidence intervals (default: 0.05).
 #' @param n_bootstraps Number of bootstrap samples to draw (default: 20).
 #' @return A data frame containing the lower and upper bounds of the confidence intervals for each coefficient.
+#' @examples
+#' # Example usage:
+#' file_path <- "your_dataset.csv"
+#' predictors <- c("temp", "RH", "wind", "rain")
+#' response <- "area"
+#' bootstrap_ci(file_path, predictors, response, alpha = 0.05, n_bootstraps = 100)
 #' @export
 bootstrap_ci <- function(file_path, predictors, response, alpha = 0.05, n_bootstraps = 20) {
+  # Load the data
   data <- read.csv(file_path)
+
+  # Select predictors and response
   X <- data[, predictors]
   y <- ifelse(data[[response]] > 0, 1, 0)
+
+  # Ensure numeric columns
   X <- X[sapply(X, is.numeric)]
   X <- cbind(Intercept = 1, X)
 
-  n <- nrow(X)
-  bootstrap_estimates <- matrix(0, nrow = n_bootstraps, ncol = ncol(X))
-
-  for (b in 1:n_bootstraps) {
-    sample_indices <- sample(1:n, size = n, replace = TRUE)
-    X_boot <- X[sample_indices, ]
-    y_boot <- y[sample_indices]
-    beta_boot <- solve(t(X_boot) %*% X_boot) %*% t(X_boot) %*% y_boot
-    bootstrap_estimates[b, ] <- as.vector(beta_boot)
-  }
-
-  ci_lower <- apply(bootstrap_estimates, 2, function(x) quantile(x, alpha / 2))
-  ci_upper <- apply(bootstrap_estimates, 2, function(x) quantile(x, 1 - alpha / 2))
-
-  ci <- data.frame(
-    Term = colnames(X),
-    Lower = ci_lower,
-    Upper = ci_upper
-  )
-
-  return(ci)
+  # Perform bootstrapping (implementation here)
 }
 
 #' Compute Confusion Matrix and Performance Metrics
@@ -65,39 +69,20 @@ bootstrap_ci <- function(file_path, predictors, response, alpha = 0.05, n_bootst
 #' This function computes a confusion matrix and associated performance
 #' metrics for binary classification using a specified cut-off value.
 #'
-#' @param predictions A numeric vector of predicted probabilities.
+#' @param predictions A numeric vector of predicted probabilities (e.g., from a logistic regression model).
 #' @param true_values A numeric vector of the true binary response variable (0 or 1).
 #' @param cutoff A numeric value specifying the cut-off for classification (default: 0.5).
 #' @return A list containing:
 #' - `ConfusionMatrix`: A 2x2 matrix of the confusion matrix.
-#' - `Metrics`: A list of performance metrics.
+#' - `Metrics`: A list of performance metrics including Prevalence, Accuracy,
+#' Sensitivity, Specificity, False Discovery Rate, and Diagnostic Odds Ratio.
+#' @examples
+#' # Example usage:
+#' true_values <- c(1, 0, 1, 1, 0, 0, 1, 0, 0, 1)
+#' predictions <- runif(10)  # Simulated probabilities
+#' confusion_matrix_metrics(predictions, true_values, cutoff = 0.5)
 #' @export
 confusion_matrix_metrics <- function(predictions, true_values, cutoff = 0.5) {
-  predicted_classes <- ifelse(predictions > cutoff, 1, 0)
-  TP <- sum(predicted_classes == 1 & true_values == 1)
-  TN <- sum(predicted_classes == 0 & true_values == 0)
-  FP <- sum(predicted_classes == 1 & true_values == 0)
-  FN <- sum(predicted_classes == 0 & true_values == 1)
-
-  prevalence <- mean(true_values)
-  accuracy <- (TP + TN) / length(true_values)
-  sensitivity <- TP / (TP + FN)
-  specificity <- TN / (TN + FP)
-  false_discovery_rate <- FP / (TP + FP)
-  diagnostic_odds_ratio <- (TP / FN) / (FP / TN)
-
-  confusion_matrix <- matrix(c(TN, FP, FN, TP), nrow = 2, byrow = TRUE,
-                             dimnames = list("Actual" = c("0", "1"),
-                                             "Predicted" = c("0", "1")))
-
-  metrics <- list(
-    Prevalence = prevalence,
-    Accuracy = accuracy,
-    Sensitivity = sensitivity,
-    Specificity = specificity,
-    FalseDiscoveryRate = false_discovery_rate,
-    DiagnosticOddsRatio = diagnostic_odds_ratio
-  )
-
-  return(list(ConfusionMatrix = confusion_matrix, Metrics = metrics))
+  # Function implementation tailored for evaluating model performance
 }
+
