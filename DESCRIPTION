@@ -2,21 +2,16 @@ Package: Group4
 Type: Package
 Title: Supervised Binary Classification Using Logistic Regression
 Version: 0.1.0
-Authors@R: c(
-    person("Emmanuel", "Okonkwo", email = "eko0013@auburn.edu", role = c("aut","cre")),
-    person("Vicky", "Caravaggio", role = "aut"),
-    person("James", "Tuttle", role = "aut"),
-    )
-Maintainer: Vicky Caravaggio <vta0003@auburn.edu>
-Description:
-    Final Project for STAT6210
-    This package provides functions for supervised binary classification 
-    using logistic regression. It includes methods to compute initial coefficients, 
-    calculate bootstrap confidence intervals, and generate confusion matrices 
-    with associated performance metrics. Users can input their own datasets and 
-    specify predictors and response variables dynamically.
+Authors@R: c(person(given = "Emmanuel", family = "Okonkwo", email = "eko0013@auburn.edu", role = c("aut", "cre")),
+    person(given = "Vicky", family = "Caravaggio", email = "vta0003@auburn.edu", role = "aut"),
+    person(given = "James", family = "Tuttle", role = "aut"))
+Description: Provides functions for supervised binary classification using logistic regression. It includes methods to compute initial coefficients, calculate bootstrap confidence intervals, and generate confusion matrices with associated performance metrics. Users can input their own datasets and specify predictors and response variables dynamically.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
+Imports: stats
 RoxygenNote: 7.3.1
-
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

@@ -1,0 +1,88 @@
+---
+title: "Group4"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+# Introduction
+
+This vignette demonstrates how to use the `Group4` package for supervised binary classification using logistic regression.
+
+# Loading the Package
+
+```{r}
+library(Group4)
+```
+
+# Example Usage with Simulated Data
+
+
+Generating Simulated Data
+
+```{r}
+set.seed(123)
+data <- data.frame(
+  x1 = rnorm(100),
+  x2 = as.factor(sample(c("A", "B"), 100, replace = TRUE)),
+  x3 = as.Date('2023-01-01') + sample(1:100, 100),
+  y = rbinom(100, 1, 0.5)
+)
+
+```
+
+Estimating Beta Coefficients
+
+```{r}
+result <- estimate_beta(data, "y")
+cat("Estimated Beta Coefficients:\n")
+print(result$beta)
+
+```
+
+Calculating Bootstrap Confidence Intervals
+
+```{r}
+ci <- bootstrap_ci(data, "y", result$beta, n_bootstrap = 100, alpha = 0.05)
+cat("\nBootstrap Confidence Intervals:\n")
+print(ci)
+
+```
+
+Generating Confusion Matrix and Metrics
+
+```{r}
+metrics <- confusion_matrix(data, "y", result$beta)
+cat("\nConfusion Matrix:\n")
+print(metrics$confusion_matrix)
+cat("\nMetrics:\n")
+cat("Prevalence:", metrics$prevalence, "\n")
+cat("Accuracy:", metrics$accuracy, "\n")
+cat("Sensitivity:", metrics$sensitivity, "\n")
+cat("Specificity:", metrics$specificity, "\n")
+cat("False Discovery Rate:", metrics$false_discovery_rate, "\n")
+cat("Diagnostic Odds Ratio:", metrics$diagnostic_odds_ratio, "\n")
+
+```
+
+
+# Conclusion
+
+In this vignette, we demonstrated how to use the Group4 package to perform logistic regression analysis, calculate bootstrap confidence intervals, and evaluate model performance using a confusion matrix and associated metrics.
+
+
+# References
+
+you can find the reference [here](https://chatgpt.com/share/674f9710-950c-8010-ab01-c910f66608bb)
+
+
