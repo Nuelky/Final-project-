@@ -1,0 +1,128 @@
+---
+title: "Group4"
+author: "Emmanuel Kossy Okonkwo Vicky Caravaggio James Tuttle"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Group4}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Introduction
+
+This vignette demonstrates how to use the functions provided in the Group4 package to:
+
+- Prepare the forest fire dataset.
+- Estimate logistic regression coefficients using a custom optimization routine (without relying on built-in logistic regression functions).
+- Compute bootstrap confidence intervals for the estimated coefficients.
+- Construct a confusion matrix and derive performance metrics from the fitted logistic model.
+
+
+# Data and Package Setup 
+
+The forest fires dataset is included in the Group4 package and can be accessed via system.file. The dataset includes various weather and geographic variables, and the binary response variable binary_area indicates whether the burned area is greater than zero.
+
+```{r setup}
+library(Group4)
+```
+
+# Data Preparation
+
+We begin by preparing the forest fires data. The prepare_forestfires_data function reads the CSV file included in the package and processes it by creating a binary response variable (binary_area), and dropping unnecessary columns:
+
+```{r}
+file_path <- "forestfires.csv"
+forestfires_data <- prepare_forestfires_data(file_path)
+head(forestfires_data)
+
+```
+
+The resulting dataframe contains numerical predictors and a binary response (0/1).
+
+
+# Estimating Coefficients
+
+We estimate logistic regression coefficients using the estimate_beta function. This function:
+
+- Prepares the data (converts factors to numeric, handles date variables).
+- Uses the least squares solution as starting values.
+- Optimizes the negative log-likelihood of a logistic regression model using optim.
+
+
+```{r}
+result <- estimate_beta(forestfires_data, "binary_area")
+result$beta
+
+```
+
+The vector result$beta provides the estimated coefficients.
+
+
+# Bootstrap Confidence Intervals
+
+We can compute bootstrap confidence intervals for these coefficients using the bootstrap_ci function. By default, it performs 20 bootstrap resamples and provides a 95% confidence interval (you can adjust these parameters).
+
+```{r}
+ci <- bootstrap_ci(forestfires_data, "binary_area", result$beta, n_bootstrap = 20, alpha = 0.05)
+ci
+
+```
+The result ci shows the lower and upper percentile-based confidence intervals for each estimated coefficient.
+
+
+
+# Confusion Matrix and Performance Metrics
+
+Once we have a fitted model, we can use confusion_matrix to generate a confusion matrix at a cut-off of 0.5. This function returns:
+
+- A 2x2 confusion matrix (actual vs. predicted).
+- Prevalence
+- Accuracy
+- Sensitivity
+- Specificity
+- False Discovery Rate
+- Diagnostic Odds Ratio
+
+
+```{r}
+metrics <- confusion_matrix(forestfires_data, "binary_area", result$beta)
+metrics$confusion_matrix
+
+```
+We can also print out the derived metrics:
+
+```{r}
+cat("Prevalence:", metrics$prevalence, "\n")
+cat("Accuracy:", metrics$accuracy, "\n")
+cat("Sensitivity:", metrics$sensitivity, "\n")
+cat("Specificity:", metrics$specificity, "\n")
+cat("False Discovery Rate:", metrics$false_discovery_rate, "\n")
+cat("Diagnostic Odds Ratio:", metrics$diagnostic_odds_ratio, "\n")
+
+```
+
+
+# Summary
+In this vignette, we demonstrated a complete workflow:
+
+- Data preparation
+- Logistic regression coefficient estimation (custom optimization)
+- Bootstrap-based confidence intervals
+- Confusion matrix and relevant metrics
+
+This workflow provides a foundation to experiment with custom logistic regression implementations and gain more transparent insight into model performance.
+
+
+
+# References
+
+You can find the references [here](https://chatgpt.com/share/675202cb-5bac-8010-b516-8dcecc495f9a)
+

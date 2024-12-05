@@ -1,33 +1,56 @@
 # Load required library
 library(stats)
 
-# 1. Prepare Design Matrix for Numerical, Date, and Factor Data Types
+# Prepare the Forestfires Dataset
+prepare_forestfires_data <- function(file_path) {
+  file_path <- system.file("extdata", "forestfires.csv", package = "Group4")
+  data <- read.csv(file_path)
+
+  # Create binary response variable
+  data$binary_area <- as.integer(data$area > 0)
+
+  # Drop unnecessary columns
+  data <- data[, !(names(data) %in% c("X", "Y", "area"))]
+
+  # Return the processed dataset
+  return(data)
+}
+
+# Use the prepare_data function as is
 prepare_data <- function(data, response) {
-  # Create the design matrix using model.matrix
+  # Convert response variable to numeric
   response_var <- as.numeric(data[[response]])
+
+  # Handle categorical variables by creating dummy variables
+  factor_cols <- sapply(data, is.factor)
+  data[factor_cols] <- lapply(data[factor_cols], function(x) as.numeric(as.factor(x)))
+
+  # Handle date variables by converting to numeric or extracting features
+  date_cols <- sapply(data, inherits, "Date")
+  if (any(date_cols)) {
+    data[date_cols] <- lapply(data[date_cols], function(x) as.numeric(as.POSIXct(x)))
+  }
+
+  # Create design matrix using model.matrix
   predictors <- model.matrix(as.formula(paste(response, "~ .")), data = data)[, -1]
   list(X = predictors, y = response_var)
 }
 
-# 2. Logistic Regression Estimation Using Numerical Optimization
+# Estimate beta coefficients using logistic regression
 estimate_beta <- function(data, response) {
-  # Prepare design matrix and response variable
   prepared_data <- prepare_data(data, response)
   X <- prepared_data$X
   y <- prepared_data$y
 
-  # Initial values using least squares
+  # Add regularization to stabilize computation
   beta_initial <- solve(t(X) %*% X) %*% t(X) %*% y
 
-  # Log-likelihood function
   log_likelihood <- function(beta) {
     p <- 1 / (1 + exp(-X %*% beta))
-    # Add a small value to p to prevent log(0)
     p <- pmin(pmax(p, .Machine$double.eps), 1 - .Machine$double.eps)
     -sum(y * log(p) + (1 - y) * log(1 - p))
   }
 
-  # Optimization using optim
   opt <- optim(
     par = beta_initial,
     fn = log_likelihood,
@@ -36,84 +59,103 @@ estimate_beta <- function(data, response) {
   list(beta = opt$par, value = opt$value, convergence = opt$convergence)
 }
 
-# 3. Bootstrap Confidence Intervals
-bootstrap_ci <- function(data, response, beta_hat, n_bootstrap = 20, alpha = 0.05) {
-  prepared_data <- prepare_data(data, response)
-  X <- prepared_data$X
-  y <- prepared_data$y
-  n <- nrow(X)
-  p <- length(beta_hat)
-  bootstrap_estimates <- matrix(NA, nrow = n_bootstrap, ncol = p)
 
-  for (i in 1:n_bootstrap) {
-    # Resample the data
-    indices <- sample(1:n, size = n, replace = TRUE)
-    X_boot <- X[indices, , drop = FALSE]
-    y_boot <- y[indices]
+bootstrap_ci <- function(data, response, beta_estimate, n_bootstrap = 20, alpha = 0.05) {
+  # Extract X and y from the prepared data
+  prepared <- prepare_data(data, response)
+  X <- prepared$X
+  y <- prepared$y
 
-    # Re-estimate beta
-    log_likelihood <- function(beta) {
-      p <- 1 / (1 + exp(-X_boot %*% beta))
-      # Add a small value to p to prevent log(0)
-      p <- pmin(pmax(p, .Machine$double.eps), 1 - .Machine$double.eps)
-      -sum(y_boot * log(p) + (1 - y_boot) * log(1 - p))
-    }
+  n <- length(y)
+  p <- length(beta_estimate)
+  bootstrap_coefs <- matrix(NA, nrow = n_bootstrap, ncol = p)
 
-    beta_boot <- optim(
-      par = beta_hat,
-      fn = log_likelihood,
-      method = "BFGS"
-    )$par
-    bootstrap_estimates[i, ] <- beta_boot
+  # Define the log-likelihood function again for optimization
+  log_likelihood <- function(beta, X, y) {
+    p <- 1 / (1 + exp(-X %*% beta))
+    p <- pmin(pmax(p, .Machine$double.eps), 1 - .Machine$double.eps)
+    -sum(y * log(p) + (1 - y) * log(1 - p))
   }
 
-  # Compute confidence intervals
-  ci <- apply(bootstrap_estimates, 2, function(x) {
-    quantile(x, probs = c(alpha / 2, 1 - alpha / 2), na.rm = TRUE)
-  })
-  t(ci)  # Transpose for clarity
+  # Perform bootstrapping
+  for (i in 1:n_bootstrap) {
+    # Resample indices with replacement
+    idx <- sample(1:n, size = n, replace = TRUE)
+    Xb <- X[idx, , drop = FALSE]
+    yb <- y[idx]
+
+    # Initial estimate using least squares on the bootstrap sample
+    beta_initial <- tryCatch({
+      solve(t(Xb) %*% Xb) %*% t(Xb) %*% yb
+    }, error = function(e) {
+      # If solve is singular, add a small ridge regularization
+      solve(t(Xb) %*% Xb + diag(1e-6, ncol(Xb))) %*% t(Xb) %*% yb
+    })
+
+    # Optimize the log-likelihood for the bootstrap sample
+    opt <- optim(
+      par = beta_initial,
+      fn = function(b) log_likelihood(b, Xb, yb),
+      method = "BFGS"
+    )
+
+    bootstrap_coefs[i, ] <- opt$par
+  }
+
+  # Compute percentile-based bootstrap confidence intervals
+  lower_bound <- apply(bootstrap_coefs, 2, quantile, probs = alpha/2)
+  upper_bound <- apply(bootstrap_coefs, 2, quantile, probs = 1 - alpha/2)
+
+  ci <- cbind(lower_bound, upper_bound)
+  rownames(ci) <- names(beta_estimate)
+  colnames(ci) <- c(paste0((100*alpha/2), "%"), paste0((100*(1 - alpha/2)), "%"))
+  return(ci)
 }
 
-# 4. Predict Classes Based on Cutoff 0.5
-predict_class <- function(beta, X) {
-  prob <- 1 / (1 + exp(-X %*% beta))
-  as.integer(prob > 0.5)
-}
 
-# 5. Confusion Matrix and Metrics
 confusion_matrix <- function(data, response, beta) {
-  prepared_data <- prepare_data(data, response)
-  X <- prepared_data$X
-  y <- prepared_data$y
-  predictions <- predict_class(beta, X)
+  # Prepare data
+  prepared <- prepare_data(data, response)
+  X <- prepared$X
+  y <- prepared$y
 
-  # Confusion matrix components
-  tp <- sum(predictions == 1 & y == 1)  # True Positives
-  tn <- sum(predictions == 0 & y == 0)  # True Negatives
-  fp <- sum(predictions == 1 & y == 0)  # False Positives
-  fn <- sum(predictions == 0 & y == 1)  # False Negatives
+  # Predicted probabilities
+  p <- 1 / (1 + exp(-X %*% beta))
 
-  # Total actual positives and negatives
-  actual_positives <- tp + fn
-  actual_negatives <- tn + fp
-  predicted_positives <- tp + fp
-  predicted_negatives <- tn + fn
+  # Predicted classes
+  y_pred <- ifelse(p > 0.5, 1, 0)
 
-  # Metrics with checks to avoid division by zero
-  prevalence <- mean(y)
-  accuracy <- (tp + tn) / (tp + tn + fp + fn)
-  sensitivity <- ifelse(actual_positives > 0, tp / actual_positives, NA)
-  specificity <- ifelse(actual_negatives > 0, tn / actual_negatives, NA)
-  false_discovery_rate <- ifelse(predicted_positives > 0, fp / predicted_positives, NA)
-  dor_denominator <- fp * fn
-  diagnostic_odds_ratio <- ifelse(dor_denominator > 0, (tp * tn) / dor_denominator, NA)
+  # Calculate confusion matrix elements
+  TP <- sum(y == 1 & y_pred == 1)
+  TN <- sum(y == 0 & y_pred == 0)
+  FP <- sum(y == 0 & y_pred == 1)
+  FN <- sum(y == 1 & y_pred == 0)
 
-  # Confusion matrix as a table
-  conf_matrix <- matrix(c(tp, fp, fn, tn), nrow = 2, byrow = TRUE,
-                        dimnames = list("Predicted" = c("1", "0"), "Actual" = c("1", "0")))
+  # Construct confusion matrix
+  conf_mat <- matrix(c(TN, FP, FN, TP), nrow = 2, byrow = TRUE,
+                     dimnames = list("Actual" = c("0","1"),
+                                     "Predicted" = c("0","1")))
+
+  # Prevalence = proportion of positives in the dataset
+  prevalence <- sum(y == 1) / length(y)
+
+  # Accuracy = (TP + TN) / (TP + TN + FP + FN)
+  accuracy <- (TP + TN) / (TP + TN + FP + FN)
+
+  # Sensitivity (Recall) = TP / (TP + FN)
+  sensitivity <- if((TP + FN) > 0) TP / (TP + FN) else NA
+
+  # Specificity = TN / (TN + FP)
+  specificity <- if((TN + FP) > 0) TN / (TN + FP) else NA
+
+  # False Discovery Rate = FP / (TP + FP)
+  false_discovery_rate <- if((TP + FP) > 0) FP / (TP + FP) else NA
+
+  # Diagnostic Odds Ratio = (TP/FN) / (FP/TN) = (TP * TN) / (FP * FN)
+  diagnostic_odds_ratio <- if((FN > 0) & (FP > 0)) (TP * TN) / (FP * FN) else NA
 
   list(
-    confusion_matrix = conf_matrix,
+    confusion_matrix = conf_mat,
     prevalence = prevalence,
     accuracy = accuracy,
     sensitivity = sensitivity,
@@ -123,27 +165,19 @@ confusion_matrix <- function(data, response, beta) {
   )
 }
 
-# 6. Example Usage with Simulated Data
-set.seed(123)
-data <- data.frame(
-  x1 = rnorm(100),
-  x2 = as.factor(sample(c("A", "B"), 100, replace = TRUE)),
-  x3 = as.Date('2023-01-01') + sample(1:100, 100),
-  y = rbinom(100, 1, 0.5)
-)
+# Example usage after your code
+file_path <- "forestfires.csv"  # your dataset path
+forestfires_data <- prepare_forestfires_data(file_path)
 
-# Estimate beta
-result <- estimate_beta(data, "y")
-cat("Estimated Beta Coefficients:\n")
-print(result$beta)
+# Estimate beta coefficients
+result <- estimate_beta(forestfires_data, "binary_area")
+print(result)
 
 # Bootstrap Confidence Intervals
-ci <- bootstrap_ci(data, "y", result$beta, n_bootstrap = 100, alpha = 0.05)
-cat("\nBootstrap Confidence Intervals:\n")
-print(ci)
+ci <- bootstrap_ci(forestfires_data, "binary_area", result$beta, n_bootstrap = 20, alpha = 0.05)
 
 # Confusion Matrix and Metrics
-metrics <- confusion_matrix(data, "y", result$beta)
+metrics <- confusion_matrix(forestfires_data, "binary_area", result$beta)
 cat("\nConfusion Matrix:\n")
 print(metrics$confusion_matrix)
 cat("\nMetrics:\n")
