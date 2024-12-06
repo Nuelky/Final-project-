@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This vignette demonstrates how to use the functions provided in the Group4 package to:
+This vignette demonstrates how to use the functions provided in the ``Group4`` package to:
 
 - Prepare the forest fire dataset.
 - Estimate logistic regression coefficients using a custom optimization routine (without relying on built-in logistic regression functions).
@@ -28,7 +28,7 @@ This vignette demonstrates how to use the functions provided in the Group4 packa
 
 # Data and Package Setup 
 
-The forest fires dataset is included in the Group4 package and can be accessed via system.file. The dataset includes various weather and geographic variables, and the binary response variable binary_area indicates whether the burned area is greater than zero.
+The forest fires dataset is included in the ``Group4`` package and can be accessed via ``system.file``. The dataset includes various weather and geographic variables, and the binary response variable ``binary_area`` indicates whether the burned area is greater than zero.
 
 ```{r setup}
 library(Group4)
@@ -36,7 +36,7 @@ library(Group4)
 
 # Data Preparation
 
-We begin by preparing the ``forestfires.csv`` data. The prepare_forestfires_data function reads the CSV file included in the package and processes it by creating a binary response variable (``binary_area``), and dropping unnecessary columns:
+We begin by preparing the ``forestfires.csv`` data. The ``prepare_forestfires_data`` function reads the CSV file included in the package and processes it by creating a binary response variable (``binary_area``), and dropping unnecessary columns:
 
 ```{r message=FALSE, warning=FALSE}
 file_path <- "forestfires.csv"
@@ -45,16 +45,16 @@ head(forestfires_data)
 
 ```
 
-The resulting dataframe contains numerical predictors and a binary response (0/1). We chose ``Area`` as our target variable and converted it to a numerical binary response (0/1). 
+The resulting dataframe contains numerical predictors and a binary response (0/1). We chose ``"Area"`` as our target variable and converted it to a numerical binary response (0/1). 
 
 
 # Estimating Coefficients
 
-We estimate logistic regression coefficients using the estimate_beta function. This function:
+We estimate logistic regression coefficients using the ``estimate_beta`` function. This function:
 
 - Prepares the data (converts factors to numeric, handles date variables).
 - Uses the least squares solution as starting values.
-- Optimizes the negative log-likelihood of a logistic regression model using ``optim``.
+- Optimizes the log-likelihood of a logistic regression model using ``optim``.
 
 
 ```{r}
@@ -63,25 +63,25 @@ result$beta
 
 ```
 
-The vector result$beta provides the estimated coefficients.
+The vector ``result$beta`` provides the estimated coefficients.
 
 
 # Bootstrap Confidence Intervals
 
-We can compute bootstrap confidence intervals for these coefficients using the bootstrap_ci function. By default, it performs 20 bootstrap resamples and provides a 95% confidence interval (you can adjust these parameters).
+We can compute bootstrap confidence intervals for these coefficients using the ``bootstrap_ci`` function. By default, it performs 20 bootstrap resamples and provides a 95% confidence interval (you can adjust these parameters).
 
 ```{r}
 ci <- bootstrap_ci(forestfires_data, "binary_area", result$beta, n_bootstrap = 20, alpha = 0.05)
 ci
 
 ```
-The result ci shows the lower and upper percentile-based confidence intervals for each estimated coefficient.
+The result ``ci`` shows the lower and upper percentile-based confidence intervals for each estimated coefficient.
 
 
 
 # Confusion Matrix and Performance Metrics
 
-Once we have a fitted model, we can use confusion_matrix to generate a confusion matrix at a cut-off of 0.5. This function returns:
+Once we have a fitted model, we can use ``confusion_matrix`` to generate a confusion matrix at a cut-off of 0.5. This function returns:
 
 - A 2x2 confusion matrix (actual vs. predicted).
 - Prevalence
@@ -111,7 +111,7 @@ cat("Diagnostic Odds Ratio:", metrics$diagnostic_odds_ratio, "\n")
 
 
 # Summary
-In this vignette, we demonstrated a complete workflow:
+In this ``vignette``, we demonstrated a complete workflow:
 
 - Time-series data set preparation
 - Logistic regression coefficient estimation (custom optimization)
