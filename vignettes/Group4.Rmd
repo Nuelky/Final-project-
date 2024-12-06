@@ -15,15 +15,6 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
-# Prologue 
-
-Before installation of the 'Group4' package, ensure the proper libraries are active to download the GitHub repository. Include the below code:
-
-```{r}
-library(devtools)
-library(repo)
-install_github('AU-R-Programming/FinalProject_Group4')
-```
 
 # Introduction
 
@@ -47,7 +38,7 @@ library(Group4)
 
 We begin by preparing the forest fires data. The prepare_forestfires_data function reads the CSV file included in the package and processes it by creating a binary response variable (binary_area), and dropping unnecessary columns:
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 file_path <- "forestfires.csv"
 forestfires_data <- prepare_forestfires_data(file_path)
 head(forestfires_data)
@@ -122,16 +113,16 @@ cat("Diagnostic Odds Ratio:", metrics$diagnostic_odds_ratio, "\n")
 # Summary
 In this vignette, we demonstrated a complete workflow:
 
-- Data preparation
+- Time-series data set preparation
 - Logistic regression coefficient estimation (custom optimization)
 - Bootstrap-based confidence intervals
 - Confusion matrix and relevant metrics
 
-This workflow provides a foundation to experiment with custom logistic regression implementations and gain more transparent insight into model performance.
+This workflow provides a foundation for experimenting with custom logistic regression implementations and gaining more transparent insight into model performance.
 
 
 
 # References
 
 You can find the references [here](https://chatgpt.com/share/675202cb-5bac-8010-b516-8dcecc495f9a)
-
+Before installing the 'Group4' package, ensure the 'devtools' and 'repo' libraries are active. The package can be retrieved from the GitHub repository found [here](https://github.com/AU-R-Programming/FinalProject_Group4).
