@@ -36,7 +36,7 @@ library(Group4)
 
 # Data Preparation
 
-We begin by preparing the forest fires data. The prepare_forestfires_data function reads the CSV file included in the package and processes it by creating a binary response variable (binary_area), and dropping unnecessary columns:
+We begin by preparing the ``forestfires.csv`` data. The prepare_forestfires_data function reads the CSV file included in the package and processes it by creating a binary response variable (``binary_area``), and dropping unnecessary columns:
 
 ```{r message=FALSE, warning=FALSE}
 file_path <- "forestfires.csv"
@@ -45,7 +45,7 @@ head(forestfires_data)
 
 ```
 
-The resulting dataframe contains numerical predictors and a binary response (0/1). We chose "Area" as our target variable and converted it to a numerical binary response (0/1). 
+The resulting dataframe contains numerical predictors and a binary response (0/1). We chose ``Area`` as our target variable and converted it to a numerical binary response (0/1). 
 
 
 # Estimating Coefficients
@@ -124,6 +124,6 @@ This workflow provides a foundation for experimenting with custom logistic regre
 
 # References
 
-Before installing the `Group4` package, ensure the `devtools` and `repo` libraries are active. The package can be retrieved from the GitHub repository found [here](https://github.com/AU-R-Programming/FinalProject_Group4).
+Before installing the ``Group4`` package, ensure the ``devtools`` and ``repo`` libraries are active. The package can be retrieved from the GitHub repository found [here](https://github.com/AU-R-Programming/FinalProject_Group4).
 
 You can find the references [here](https://chatgpt.com/share/675202cb-5bac-8010-b516-8dcecc495f9a) 
