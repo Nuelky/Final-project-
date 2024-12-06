@@ -45,7 +45,7 @@ head(forestfires_data)
 
 ```
 
-The resulting dataframe contains numerical predictors and a binary response (0/1).
+The resulting dataframe contains numerical predictors and a binary response (0/1). We chose "Area" as our target variable and converted it to a numerical binary response (0/1). 
 
 
 # Estimating Coefficients
@@ -54,7 +54,7 @@ We estimate logistic regression coefficients using the estimate_beta function. T
 
 - Prepares the data (converts factors to numeric, handles date variables).
 - Uses the least squares solution as starting values.
-- Optimizes the negative log-likelihood of a logistic regression model using optim.
+- Optimizes the negative log-likelihood of a logistic regression model using `optim`.
 
 
 ```{r}
