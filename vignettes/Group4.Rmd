@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
-#Prologue 
+# Prologue 
 
 Before installation of the 'Group4' package, ensure the proper libraries are active to download the GitHub repository. Include the below code:
 
