@@ -15,6 +15,15 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+#Prologue 
+
+Before installation of the 'Group4' package, ensure the proper libraries are active to download the GitHub repository. include the below code:
+
+```{r}
+library(devtools)
+library(repo)
+install_github('AU-R-Programming/FinalProject_Group4')
+```
 
 # Introduction
 
