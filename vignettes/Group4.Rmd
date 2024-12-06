@@ -124,6 +124,6 @@ This workflow provides a foundation for experimenting with custom logistic regre
 
 # References
 
-Before installing the 'Group4' package, ensure the 'devtools' and 'repo' libraries are active. The package can be retrieved from the GitHub repository found [here](https://github.com/AU-R-Programming/FinalProject_Group4).
+Before installing the `Group4` package, ensure the `devtools` and `repo` libraries are active. The package can be retrieved from the GitHub repository found [here](https://github.com/AU-R-Programming/FinalProject_Group4).
 
 You can find the references [here](https://chatgpt.com/share/675202cb-5bac-8010-b516-8dcecc495f9a) 
