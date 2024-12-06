@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 ```
 #Prologue 
 
-Before installation of the 'Group4' package, ensure the proper libraries are active to download the GitHub repository. include the below code:
+Before installation of the 'Group4' package, ensure the proper libraries are active to download the GitHub repository. Include the below code:
 
 ```{r}
 library(devtools)
